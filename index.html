@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Multilingual Voice & Text Translator</title>
+  <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #1d2671, #c33764);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Poppins', sans-serif;
+      color: #fff;
+      padding: 40px 20px;
+    }
+    .wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 40px;
+      align-items: flex-start;
+      width: 100%;
+      max-width: 1200px;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 40px 30px;
+      width: 100%;
+      max-width: 500px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 20px;
+      font-weight: 600;
+      font-size: 1.7rem;
+    }
+    #output, #translatedText {
+      margin-top: 20px;
+      min-height: 70px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 20px;
+      font-size: 1.1rem;
+      color: #fff;
+      font-weight: 500;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      text-align: left;
+    }
+    select, textarea, button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: inherit;
+      margin-bottom: 12px;
+      border: none;
+      background: rgba(255,255,255,0.1);
+      color: #fff;
+      font-weight: 500;
+    }
+    option { color: #000; }
+    button {
+      background-color: #8a2be2;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.3s ease;
+    }
+    button:hover { background-color: #a755ff; }
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+    .copyBtn, .clearBtn {
+      padding: 10px 20px;
+      font-size: 0.95rem;
+      border-radius: 40px;
+      font-weight: 600;
+      background: #5a5a5a;
+    }
+    .copyBtn:hover { background: #4caf50; }
+    .clearBtn:hover { background: #d9534f; }
+    #status, #translateStatus {
+      min-height: 20px;
+      margin-top: 10px;
+      font-size: 0.95rem;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <!-- Voice to Text with AOS -->
+    <div class="container" data-aos="fade-up" data-aos-duration="1000" data-aos-once="true">
+      <h1>🎙️ Voice to Text</h1>
+      <select id="voiceLang">
+        <option value="en-US">English</option>
+        <option value="te-IN">Telugu</option>
+        <option value="hi-IN">Hindi</option>
+      </select>
+      <button id="startBtn">Start Recognition</button>
+      <div id="status"></div>
+      <div id="output"></div>
+      <div class="btn-group">
+        <button class="copyBtn" id="copyBtn" disabled>📋 Copy</button>
+        <button class="clearBtn" id="clearBtn" disabled>✖ Clear</button>
+      </div>
+    </div>
+
+    <!-- Translator -->
+    <div class="container" data-aos="zoom-in" data-aos-duration="1000" data-aos-once="true">
+      <h1>🌐 Language Translator</h1>
+      <select id="sourceLang">
+        <option value="en">English</option>
+        <option value="te">Telugu</option>
+        <option value="hi">Hindi</option>
+      </select>
+      <select id="targetLang">
+        <option value="te">Telugu</option>
+        <option value="en">English</option>
+        <option value="hi">Hindi</option>
+      </select>
+      <textarea id="inputText" rows="4" placeholder="Enter text to translate..."></textarea>
+      <button id="translateBtn">Translate</button>
+      <div id="translateStatus"></div>
+      <div id="translatedText"></div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+  <script>
+    AOS.init();
+
+    // VOICE TO TEXT LOGIC
+    const startBtn = document.getElementById('startBtn');
+    const output = document.getElementById('output');
+    const status = document.getElementById('status');
+    const copyBtn = document.getElementById('copyBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const voiceLang = document.getElementById('voiceLang');
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Speech Recognition not supported in this browser.');
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.interimResults = false;
+
+      startBtn.addEventListener('click', () => {
+        recognition.lang = voiceLang.value;
+        recognition.start();
+        status.textContent = '🎤 Listening...';
+        output.textContent = '';
+      });
+
+      recognition.addEventListener('result', (e) => {
+        const transcript = e.results[0][0].transcript;
+        output.textContent = transcript;
+        status.textContent = '✅ Recognition Complete.';
+        copyBtn.disabled = false;
+        clearBtn.disabled = false;
+      });
+
+      recognition.addEventListener('error', (e) => {
+        status.textContent = '⚠️ Error: ' + e.error;
+      });
+
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(output.textContent);
+        status.textContent = '📋 Copied!';
+      });
+
+      clearBtn.addEventListener('click', () => {
+        output.textContent = '';
+        status.textContent = '';
+        copyBtn.disabled = true;
+        clearBtn.disabled = true;
+      });
+    }
+
+    // TRANSLATION LOGIC
+    const sourceLang = document.getElementById('sourceLang');
+    const targetLang = document.getElementById('targetLang');
+    const inputText = document.getElementById('inputText');
+    const translateBtn = document.getElementById('translateBtn');
+    const translatedText = document.getElementById('translatedText');
+    const translateStatus = document.getElementById('translateStatus');
+
+    translateBtn.addEventListener('click', async () => {
+      const text = inputText.value.trim();
+      const from = sourceLang.value;
+      const to = targetLang.value;
+
+      if (!text || from === to) {
+        translateStatus.textContent = '⚠️ Enter valid text and choose different languages.';
+        return;
+      }
+
+      translateStatus.textContent = '🔄 Translating...';
+      try {
+        const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${from}|${to}`);
+        const data = await res.json();
+        translatedText.textContent = data.responseData.translatedText;
+        translateStatus.textContent = '✅ Translation Done.';
+      } catch (err) {
+        translateStatus.textContent = '❌ Translation failed. Try again.';
+      }
+    });
+  </script>
+</body>
+</html>
